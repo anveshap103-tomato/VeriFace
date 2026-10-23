@@ -90,3 +90,19 @@ button:disabled {
 .privacy-note {
   font-size: 13px;
 }
+
+
+.detection-panel {
+  width: min(640px, 100%);
+  margin: 16px auto;
+  padding: 12px 18px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #172235;
+  text-align: left;
+}
+
+.detection-panel p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
