@@ -236,6 +236,10 @@ function App() {
             setGuidance("Move your face toward the center.");
           } else if (centerY < 0.3 || centerY > 0.7) {
             setGuidance("Adjust your face vertically toward the center.");
+          }else if (noseOffset < -0.035) {
+            setGuidance("Turn your head slightly to your right.");
+          } else if (noseOffset > 0.035) {
+            setGuidance("Turn your head slightly to your left."); 
           } else {
             setGuidance("Face detected. Position looks good.");
           }
