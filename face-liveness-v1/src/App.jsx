@@ -16,6 +16,8 @@ function App() {
   const animationRef = useRef(null);
   const lastVideoTimeRef = useRef(-1);
   const startingRef = useRef(false);
+  const blinkStateRef = useRef("open");
+  const blinkCountRef = useRef(0);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -24,6 +26,7 @@ function App() {
   const [guidance, setGuidance] = useState(
     "Start your camera to begin."
   );
+  const [blinkCount, setBlinkCount] = useState(0);
 
   function stopCamera() {
     if (animationRef.current !== null) {
@@ -48,6 +51,9 @@ function App() {
     setCameraActive(false);
     setStarting(false);
     setFaceCount(0);
+    blinkStateRef.current = "open";
+    blinkCountRef.current = 0;
+    setBlinkCount(0);
     setGuidance("Start your camera to begin.");
   }
 
@@ -91,7 +97,7 @@ function App() {
           },
           runningMode: "VIDEO",
           numFaces: 3,
-          outputFaceBlendshapes: false,
+          outputFaceBlendshapes: true,
           outputFacialTransformationMatrixes: false,
         }
       );
@@ -144,6 +150,31 @@ function App() {
     }
   }
 
+  function detectBlink(blendshapes) {
+    const categories = blendshapes?.[0]?.categories;
+
+    if (!categories) return;
+
+    const left = categories.find(
+      (item) => item.categoryName === "eyeBlinkLeft"
+    )?.score ?? 0;
+
+    const right = categories.find(
+      (item) => item.categoryName === "eyeBlinkRight"
+    )?.score ?? 0;
+
+    const eyesClosed = left > 0.45 && right > 0.45;
+    const eyesOpen = left < 0.35 && right < 0.35;
+
+    if (blinkStateRef.current === "open" && eyesClosed) {
+      blinkStateRef.current = "closed";
+    } else if (blinkStateRef.current === "closed" && eyesOpen) {
+      blinkStateRef.current = "open";
+      blinkCountRef.current += 1;
+      setBlinkCount(blinkCountRef.current);
+    }
+  }
+
   function detectFrame() {
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
@@ -161,6 +192,7 @@ function App() {
           video,
           performance.now()
         );
+        detectBlink(result.faceBlendshapes);
 
         const faces = result.faceLandmarks || [];
         setFaceCount(faces.length);
@@ -171,6 +203,12 @@ function App() {
           setGuidance("Multiple faces detected. Only one person should be visible.");
         } else {
           const landmarks = faces[0];
+          const nose = landmarks[1];
+          const leftSide = landmarks[234];
+          const rightSide = landmarks[454];
+
+          const faceCenterX = (leftSide.x + rightSide.x) / 2;
+          const noseOffset = nose.x - faceCenterX;
 
           const centerX =
             landmarks.reduce((sum, point) => sum + point.x, 0) /
@@ -248,6 +286,7 @@ function App() {
         <p>
           <strong>Face count:</strong> {faceCount}
         </p>
+        <p><strong>Blinks detected:</strong> {blinkCount}</p>
         <p>
           <strong>Guidance:</strong> {guidance}
         </p>
