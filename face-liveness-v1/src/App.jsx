@@ -29,6 +29,13 @@ function App() {
     "Start your camera to begin."
   );
   const [blinkCount, setBlinkCount] = useState(0);
+  const [challengeStatus, setChallengeStatus] = useState("idle");
+  const [challengeMessage, setChallengeMessage] = useState(
+    "Start a challenge when you're ready."
+  );
+
+const challengeActiveRef = useRef(false);
+const challengeTimerRef = useRef(null);
 
   function stopCamera() {
     if (animationRef.current !== null) {
@@ -59,6 +66,11 @@ function App() {
     setGuidance("Start your camera to begin.");
     baselineOffsetRef.current = null;
     headDirectionRef.current = "center";
+    challengeActiveRef.current = false;
+    setChallengeStatus("idle");
+    setChallengeMessage("Start a challenge when you're ready.");
+    clearTimeout(challengeTimerRef.current);
+    challengeTimerRef.current = null;
   }
 
   async function startCamera() {
@@ -176,7 +188,37 @@ function App() {
       blinkStateRef.current = "open";
       blinkCountRef.current += 1;
       setBlinkCount(blinkCountRef.current);
+      if (challengeActiveRef.current) {
+        challengeActiveRef.current = false;
+        clearTimeout(challengeTimerRef.current);
+        setChallengeStatus("completed");
+        setChallengeMessage("Blink detected! Challenge completed.");
+      }
     }
+  }
+
+  function startBlinkChallenge() {
+    if (!cameraActive || faceCount !== 1) {
+      setChallengeMessage(
+        "Start the camera and make sure exactly one face is visible."
+      );
+      return;
+    }
+
+    blinkStateRef.current = "open";
+    challengeActiveRef.current = true;
+
+    setChallengeStatus("active");
+    setChallengeMessage("Please blink naturally.");
+    challengeTimerRef.current = setTimeout(() => {
+      if (challengeActiveRef.current) {
+        challengeActiveRef.current = false;
+        setChallengeStatus("failed");
+        setChallengeMessage(
+          "Challenge timed out. Please try again."
+        );
+      }
+    }, 10000);
   }
 
   function detectFrame() {
@@ -303,6 +345,36 @@ function App() {
         <p>
           <strong>Guidance:</strong> {guidance}
         </p>
+      </section>
+
+      <section className="detection-panel">
+        <h2>Active Liveness Challenge</h2>
+
+        <p>{challengeMessage}</p>
+
+        <p>
+          <strong>Status:</strong>{" "}
+          {challengeStatus === "idle"
+            ? "Not started"
+            : challengeStatus === "active"
+              ? "Waiting for blink"
+              : challengeStatus === "failed"
+                ?"Timed Out"
+                : "Completed"}
+        </p>
+
+        <button
+          onClick={startBlinkChallenge}
+          disabled={!cameraActive || challengeStatus === "active"}
+        >
+          {challengeStatus === "idle"
+            ? "Not started"
+            : challengeStatus === "active"
+              ? "Waiting for blink"
+              : challengeStatus === "completed"
+                ? "Completed"
+                : "Try Again"}
+        </button>
       </section>
 
       <p className="status">
