@@ -18,6 +18,8 @@ function App() {
   const startingRef = useRef(false);
   const blinkStateRef = useRef("open");
   const blinkCountRef = useRef(0);
+  const baselineOffsetRef = useRef(null);
+  const headDirectionRef = useRef("center");
 
   const [cameraActive, setCameraActive] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -55,6 +57,8 @@ function App() {
     blinkCountRef.current = 0;
     setBlinkCount(0);
     setGuidance("Start your camera to begin.");
+    baselineOffsetRef.current = null;
+    headDirectionRef.current = "center";
   }
 
   async function startCamera() {
@@ -209,6 +213,11 @@ function App() {
 
           const faceCenterX = (leftSide.x + rightSide.x) / 2;
           const noseOffset = nose.x - faceCenterX;
+          if (baselineOffsetRef.current === null) {
+            baselineOffsetRef.current = noseOffset;
+          }
+
+          const relativeOffset = noseOffset - baselineOffsetRef.current;
 
           const centerX =
             landmarks.reduce((sum, point) => sum + point.x, 0) /
@@ -236,9 +245,9 @@ function App() {
             setGuidance("Move your face toward the center.");
           } else if (centerY < 0.3 || centerY > 0.7) {
             setGuidance("Adjust your face vertically toward the center.");
-          }else if (noseOffset < -0.035) {
+          }else if (relativeOffset < -0.035) {
             setGuidance("Turn your head slightly to your right.");
-          } else if (noseOffset > 0.035) {
+          } else if (relativeOffset > 0.035) {
             setGuidance("Turn your head slightly to your left."); 
           } else {
             setGuidance("Face detected. Position looks good.");
