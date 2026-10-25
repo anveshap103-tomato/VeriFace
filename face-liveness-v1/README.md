@@ -29,7 +29,7 @@ The project is built with Electron, React, Vite, and MediaPipe Face Landmarker.
 
 Download the macOS installer from the shared Google Drive link provided with this project.
 
-**Installer:** `VeriFace-0.0.0-arm64.dmg`
+**Installer:** `https://drive.google.com/drive/folders/11yoAPImhRpbH8CzBasbYO1NF1bMiGNn0?usp=sharing`
 
 The installer is approximately 127 MB.
 
