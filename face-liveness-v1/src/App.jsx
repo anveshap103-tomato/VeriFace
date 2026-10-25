@@ -38,11 +38,18 @@ function App() {
   const [headChallengeMessage, setHeadChallengeMessage] = useState(
     "Start a head-turn challenge when ready."
   );
+  const [rightChallengeStatus, setRightChallengeStatus] = useState("idle");
+  const [rightChallengeMessage, setRightChallengeMessage] = useState(
+    "Start a right head-turn challenge when ready."
+  );
 
 const challengeActiveRef = useRef(false);
 const challengeTimerRef = useRef(null);
 const headChallengeTimerRef = useRef(null);
 const headChallengeStatusRef = useRef("idle");
+const rightChallengeActiveRef = useRef(false);
+const rightChallengeTimerRef = useRef(null);
+const rightChallengeStatusRef = useRef("idle");
 
   function stopCamera() {
     if (animationRef.current !== null) {
@@ -84,6 +91,12 @@ const headChallengeStatusRef = useRef("idle");
     setHeadChallengeMessage("Start a head-turn challenge when ready.");
     clearTimeout(headChallengeTimerRef.current);
     headChallengeTimerRef.current = null;
+    rightChallengeActiveRef.current = false;
+    rightChallengeStatusRef.current = "idle";
+    setRightChallengeStatus("idle");
+    setRightChallengeMessage("Start a right head-turn challenge when ready.");
+    clearTimeout(rightChallengeTimerRef.current);
+    rightChallengeTimerRef.current = null;
   }
 
   async function startCamera() {
@@ -260,6 +273,31 @@ const headChallengeStatusRef = useRef("idle");
     }, 10000);
   }
 
+  function startRightTurnChallenge() {
+    if (!cameraActive || faceCount !== 1) {
+      setRightChallengeMessage(
+        "Start the camera and make sure exactly one face is visible."
+      );
+      return;
+    }
+
+    clearTimeout(rightChallengeTimerRef.current);
+    rightChallengeActiveRef.current = true;
+    rightChallengeStatusRef.current = "active";
+
+    setRightChallengeStatus("active");
+    setRightChallengeMessage("Turn your head to your right.");
+
+    rightChallengeTimerRef.current = setTimeout(() => {
+      if (rightChallengeActiveRef.current) {
+        rightChallengeActiveRef.current = false;
+        rightChallengeStatusRef.current = "failed";
+        setRightChallengeStatus("failed");
+        setRightChallengeMessage("Challenge timed out. Please try again.");
+      }
+    }, 10000);
+  }
+
   function detectFrame() {
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
@@ -298,18 +336,30 @@ const headChallengeStatusRef = useRef("idle");
             baselineOffsetRef.current = noseOffset;
           }
 
+          // In the mirrored webcam feed: positive relativeOffset = person's left, negative = person's right
           const relativeOffset = noseOffset - baselineOffsetRef.current;
           if (
             headChallengeActiveRef.current &&
             headChallengeStatusRef.current === "active"
           ) {
-            if (relativeOffset < -0.06) {
-              headDirectionRef.current = "left";
+            if (relativeOffset > 0.06) {
               headChallengeActiveRef.current = false;
               headChallengeStatusRef.current = "completed";
               clearTimeout(headChallengeTimerRef.current);
               setHeadChallengeStatus("completed");
               setHeadChallengeMessage("Left turn detected!");
+            }
+          }
+          if (
+            rightChallengeActiveRef.current &&
+            rightChallengeStatusRef.current === "active"
+          ) {
+            if (relativeOffset < -0.06) {
+              rightChallengeActiveRef.current = false;
+              rightChallengeStatusRef.current = "completed";
+              clearTimeout(rightChallengeTimerRef.current);
+              setRightChallengeStatus("completed");
+              setRightChallengeMessage("Right turn detected!");
             }
           }
 
@@ -400,10 +450,10 @@ const headChallengeStatusRef = useRef("idle");
       </section>
 
       <section className="detection-panel">
-        <h2>Head-Turn Challenge</h2>
+        <h2>Head-Turn Challenges</h2>
 
+        <p><strong>Left Turn</strong></p>
         <p>{headChallengeMessage}</p>
-
         <p>
           <strong>Status:</strong>{" "}
           {headChallengeStatus === "idle"
@@ -414,16 +464,40 @@ const headChallengeStatusRef = useRef("idle");
                 ? "Timed Out"
                 : "Completed"}
         </p>
-
         <button
           onClick={startHeadTurnChallenge}
           disabled={!cameraActive || headChallengeStatus === "active"}
         >
           {headChallengeStatus === "idle"
-            ? "Start Head-Turn Challenge"
+            ? "Start Left-Turn Challenge"
             : headChallengeStatus === "active"
               ? "Waiting..."
               : headChallengeStatus === "completed"
+                ? "Completed"
+                : "Try Again"}
+        </button>
+
+        <p style={{ marginTop: "16px" }}><strong>Right Turn</strong></p>
+        <p>{rightChallengeMessage}</p>
+        <p>
+          <strong>Status:</strong>{" "}
+          {rightChallengeStatus === "idle"
+            ? "Not started"
+            : rightChallengeStatus === "active"
+              ? "Waiting for head turn"
+              : rightChallengeStatus === "failed"
+                ? "Timed Out"
+                : "Completed"}
+        </p>
+        <button
+          onClick={startRightTurnChallenge}
+          disabled={!cameraActive || rightChallengeStatus === "active"}
+        >
+          {rightChallengeStatus === "idle"
+            ? "Start Right-Turn Challenge"
+            : rightChallengeStatus === "active"
+              ? "Waiting..."
+              : rightChallengeStatus === "completed"
                 ? "Completed"
                 : "Try Again"}
         </button>
