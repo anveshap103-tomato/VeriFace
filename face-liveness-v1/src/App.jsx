@@ -20,6 +20,7 @@ function App() {
   const blinkCountRef = useRef(0);
   const baselineOffsetRef = useRef(null);
   const headDirectionRef = useRef("center");
+  const headChallengeActiveRef = useRef(false);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -33,9 +34,15 @@ function App() {
   const [challengeMessage, setChallengeMessage] = useState(
     "Start a challenge when you're ready."
   );
+  const [headChallengeStatus, setHeadChallengeStatus] = useState("idle");
+  const [headChallengeMessage, setHeadChallengeMessage] = useState(
+    "Start a head-turn challenge when ready."
+  );
 
 const challengeActiveRef = useRef(false);
 const challengeTimerRef = useRef(null);
+const headChallengeTimerRef = useRef(null);
+const headChallengeStatusRef = useRef("idle");
 
   function stopCamera() {
     if (animationRef.current !== null) {
@@ -71,6 +78,12 @@ const challengeTimerRef = useRef(null);
     setChallengeMessage("Start a challenge when you're ready.");
     clearTimeout(challengeTimerRef.current);
     challengeTimerRef.current = null;
+    headChallengeActiveRef.current = false;
+    headChallengeStatusRef.current = "idle";
+    setHeadChallengeStatus("idle");
+    setHeadChallengeMessage("Start a head-turn challenge when ready.");
+    clearTimeout(headChallengeTimerRef.current);
+    headChallengeTimerRef.current = null;
   }
 
   async function startCamera() {
@@ -221,6 +234,32 @@ const challengeTimerRef = useRef(null);
     }, 10000);
   }
 
+  function startHeadTurnChallenge() {
+    if (!cameraActive || faceCount !== 1) {
+      setHeadChallengeMessage(
+        "Start the camera and make sure exactly one face is visible."
+      );
+      return;
+    }
+
+    clearTimeout(headChallengeTimerRef.current);
+    headChallengeActiveRef.current = true;
+    headChallengeStatusRef.current = "active";
+    headDirectionRef.current = "center";
+
+    setHeadChallengeStatus("active");
+    setHeadChallengeMessage("Turn your head to your left.");
+
+    headChallengeTimerRef.current = setTimeout(() => {
+      if (headChallengeActiveRef.current) {
+        headChallengeActiveRef.current = false;
+        headChallengeStatusRef.current = "failed";
+        setHeadChallengeStatus("failed");
+        setHeadChallengeMessage("Challenge timed out. Please try again.");
+      }
+    }, 10000);
+  }
+
   function detectFrame() {
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
@@ -260,6 +299,19 @@ const challengeTimerRef = useRef(null);
           }
 
           const relativeOffset = noseOffset - baselineOffsetRef.current;
+          if (
+            headChallengeActiveRef.current &&
+            headChallengeStatusRef.current === "active"
+          ) {
+            if (relativeOffset < -0.06) {
+              headDirectionRef.current = "left";
+              headChallengeActiveRef.current = false;
+              headChallengeStatusRef.current = "completed";
+              clearTimeout(headChallengeTimerRef.current);
+              setHeadChallengeStatus("completed");
+              setHeadChallengeMessage("Left turn detected!");
+            }
+          }
 
           const centerX =
             landmarks.reduce((sum, point) => sum + point.x, 0) /
@@ -345,6 +397,36 @@ const challengeTimerRef = useRef(null);
         <p>
           <strong>Guidance:</strong> {guidance}
         </p>
+      </section>
+
+      <section className="detection-panel">
+        <h2>Head-Turn Challenge</h2>
+
+        <p>{headChallengeMessage}</p>
+
+        <p>
+          <strong>Status:</strong>{" "}
+          {headChallengeStatus === "idle"
+            ? "Not started"
+            : headChallengeStatus === "active"
+              ? "Waiting for head turn"
+              : headChallengeStatus === "failed"
+                ? "Timed Out"
+                : "Completed"}
+        </p>
+
+        <button
+          onClick={startHeadTurnChallenge}
+          disabled={!cameraActive || headChallengeStatus === "active"}
+        >
+          {headChallengeStatus === "idle"
+            ? "Start Head-Turn Challenge"
+            : headChallengeStatus === "active"
+              ? "Waiting..."
+              : headChallengeStatus === "completed"
+                ? "Completed"
+                : "Try Again"}
+        </button>
       </section>
 
       <section className="detection-panel">
