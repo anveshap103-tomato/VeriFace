@@ -30,27 +30,49 @@ export default function ChallengePanel({
   onStartHeadRight,
   verificationState,
   onStartVerification,
+  onRetryVerification,
 }) {
   const verificationActive = [
     "checking-face", "blink", "turn-left", "turn-right",
   ].includes(verificationState);
 
+  function renderVerificationResult() {
+    if (verificationState === "completed") {
+      return <p style={{ color: "#4ade80", fontWeight: 600 }}>✅ Verification Successful! All challenges completed.</p>;
+    }
+    if (verificationState === "failed") {
+      return <p style={{ color: "#f87171", fontWeight: 600 }}>❌ Verification Failed. Please try again.</p>;
+    }
+    if (verificationState === "inconclusive") {
+      return <p style={{ color: "#fbbf24", fontWeight: 600 }}>⚠️ Unable to verify. Please check your camera and face position, then try again.</p>;
+    }
+    return <p>{VERIFICATION_LABELS[verificationState]}</p>;
+  }
+
   return (
     <>
       <section className="detection-panel">
         <h2>Liveness Verification</h2>
-        <p>{VERIFICATION_LABELS[verificationState]}</p>
+        {renderVerificationResult()}
         <p><strong>Status:</strong> {verificationState}</p>
-        <button
-          onClick={onStartVerification}
-          disabled={!cameraActive || verificationActive}
-        >
-          {verificationState === "ready"
-            ? "Start Verification"
-            : verificationActive
-              ? "Running..."
-              : "Retry Verification"}
-        </button>
+        {verificationState === "ready" && (
+          <button onClick={onStartVerification} disabled={!cameraActive}>
+            Start Verification
+          </button>
+        )}
+        {verificationActive && (
+          <button disabled>Running...</button>
+        )}
+        {(verificationState === "failed" || verificationState === "inconclusive") && (
+          <button onClick={onRetryVerification} disabled={!cameraActive}>
+            Try Again
+          </button>
+        )}
+        {verificationState === "completed" && (
+          <button onClick={onRetryVerification} disabled={!cameraActive}>
+            Retry Verification
+          </button>
+        )}
       </section>
       <section className="detection-panel">
         <h2>Head-Turn Challenges</h2>

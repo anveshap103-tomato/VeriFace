@@ -244,7 +244,32 @@ export function useFaceDetection() {
     }, 10000);
   }
 
-  // Wire callbacks so useVerification can trigger challenges without stale closures
+  function retryVerification() {
+    blinkStateRef.current = "open";
+
+    challengeActiveRef.current = false;
+    clearTimeout(challengeTimerRef.current);
+    challengeTimerRef.current = null;
+    setChallengeStatus("idle");
+    setChallengeMessage("Start a challenge when you're ready.");
+
+    headChallengeActiveRef.current = false;
+    headChallengeStatusRef.current = "idle";
+    clearTimeout(headChallengeTimerRef.current);
+    headChallengeTimerRef.current = null;
+    setHeadChallengeStatus("idle");
+    setHeadChallengeMessage("Start a head-turn challenge when ready.");
+
+    rightChallengeActiveRef.current = false;
+    rightChallengeStatusRef.current = "idle";
+    clearTimeout(rightChallengeTimerRef.current);
+    rightChallengeTimerRef.current = null;
+    setRightChallengeStatus("idle");
+    setRightChallengeMessage("Start a right head-turn challenge when ready.");
+
+    resetVerification();
+  }
+
   startBlinkCb.current = () => startBlinkChallenge(faceCountRef.current);
   startLeftCb.current  = () => startHeadTurnChallenge(faceCountRef.current);
   startRightCb.current = () => startRightTurnChallenge(faceCountRef.current);
@@ -402,5 +427,6 @@ export function useFaceDetection() {
     startRightTurnChallenge,
     verificationState,
     startVerification,
+    retryVerification,
   };
 }

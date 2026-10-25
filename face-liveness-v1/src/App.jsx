@@ -26,6 +26,7 @@ function App() {
     startRightTurnChallenge,
     verificationState,
     startVerification,
+    retryVerification,
   } = useFaceDetection();
 
   return (
@@ -55,6 +56,7 @@ function App() {
         onStartHeadRight={() => startRightTurnChallenge(faceCount)}
         verificationState={verificationState}
         onStartVerification={() => startVerification(cameraActive, faceCount)}
+        onRetryVerification={retryVerification}
       />
 
       <p className="status">
