@@ -3,7 +3,8 @@ import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { getBlinkScores, computeNoseOffset, computeGuidance } from "../utils/livenessUtils";
 import { useVerification } from "./useVerification";
 
-const MODEL_PATH = "/models/face_landmarker.task";
+
+const MODEL_PATH = `${import.meta.env.BASE_URL}models/face_landmarker.task`;
 const WASM_PATH =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
 
