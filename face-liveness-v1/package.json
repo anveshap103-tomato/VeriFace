@@ -10,7 +10,8 @@
     "dev:desktop": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dist": "npm run build && electron-builder"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.1.1",
@@ -24,11 +25,28 @@
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^9.2.5",
     "electron": "^41.7.1",
+    "electron-builder": "^26.18.0",
     "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
     "vite": "^8.3.4",
     "wait-on": "^9.5.1"
+  },
+  "build": {
+    "appId": "com.veriface.liveness",
+    "productName": "VeriFace",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.utilities"
+    }
   }
 }
