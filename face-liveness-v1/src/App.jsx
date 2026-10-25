@@ -31,52 +31,57 @@ function App() {
 
   return (
     <main className="app">
-      <h1>Face Liveness Detection</h1>
-      <p className="subtitle">Face detection prototype</p>
-
-      <CameraPreview videoRef={videoRef} cameraActive={cameraActive} />
-
-      <DetectionPanel
-        faceCount={faceCount}
-        blinkCount={blinkCount}
-        guidance={guidance}
-      />
-
-      <ChallengePanel
-        cameraActive={cameraActive}
-        faceCount={faceCount}
-        challengeStatus={challengeStatus}
-        challengeMessage={challengeMessage}
-        onStartBlink={() => startBlinkChallenge(faceCount)}
-        headChallengeStatus={headChallengeStatus}
-        headChallengeMessage={headChallengeMessage}
-        onStartHeadLeft={() => startHeadTurnChallenge(faceCount)}
-        rightChallengeStatus={rightChallengeStatus}
-        rightChallengeMessage={rightChallengeMessage}
-        onStartHeadRight={() => startRightTurnChallenge(faceCount)}
-        verificationState={verificationState}
-        onStartVerification={() => startVerification(cameraActive, faceCount)}
-        onRetryVerification={retryVerification}
-      />
-
-      <p className="status">
-        Status: {cameraActive ? "Detecting Face" : "Ready"}
-      </p>
-
-      {error && <p className="error">{error}</p>}
-
-      <div className="controls">
-        <button onClick={startCamera} disabled={starting || cameraActive}>
-          {starting ? "Starting..." : "Start Camera"}
-        </button>
-        <button onClick={stopCamera} disabled={!starting && !cameraActive}>
-          Stop Camera
-        </button>
+      <div className="app-header">
+        <h1>Face Liveness Detection</h1>
+        <p className="subtitle">Face detection prototype</p>
       </div>
 
-      <p className="privacy-note">
-        Video frames are processed locally and are not saved by this prototype.
-      </p>
+      <div className="dashboard">
+        <div className="col-camera">
+          <CameraPreview videoRef={videoRef} cameraActive={cameraActive} />
+
+          <DetectionPanel
+            faceCount={faceCount}
+            blinkCount={blinkCount}
+            guidance={guidance}
+          />
+
+          <p className="status">
+            Status: {cameraActive ? "Detecting Face" : "Ready"}
+          </p>
+
+          {error && <p className="error">{error}</p>}
+
+          <div className="controls">
+            <button onClick={startCamera} disabled={starting || cameraActive}>
+              {starting ? "Starting..." : "Start Camera"}
+            </button>
+            <button onClick={stopCamera} disabled={!starting && !cameraActive}>
+              Stop Camera
+            </button>
+          </div>
+
+        </div>
+
+        <div className="col-verification">
+          <ChallengePanel
+            cameraActive={cameraActive}
+            faceCount={faceCount}
+            challengeStatus={challengeStatus}
+            challengeMessage={challengeMessage}
+            onStartBlink={() => startBlinkChallenge(faceCount)}
+            headChallengeStatus={headChallengeStatus}
+            headChallengeMessage={headChallengeMessage}
+            onStartHeadLeft={() => startHeadTurnChallenge(faceCount)}
+            rightChallengeStatus={rightChallengeStatus}
+            rightChallengeMessage={rightChallengeMessage}
+            onStartHeadRight={() => startRightTurnChallenge(faceCount)}
+            verificationState={verificationState}
+            onStartVerification={() => startVerification(cameraActive, faceCount)}
+            onRetryVerification={retryVerification}
+          />
+        </div>
+      </div>
     </main>
   );
 }
