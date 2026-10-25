@@ -1,3 +1,14 @@
+const VERIFICATION_LABELS = {
+  ready: "Ready to start.",
+  "checking-face": "Checking for a stable face...",
+  blink: "Step 1 of 3: Please blink naturally.",
+  "turn-left": "Step 2 of 3: Turn your head to your left.",
+  "turn-right": "Step 3 of 3: Turn your head to your right.",
+  completed: "Verification passed.",
+  failed: "Verification failed — timed out.",
+  inconclusive: "Verification inconclusive — face was lost.",
+};
+
 function statusLabel(status, waitingText) {
   if (status === "idle") return "Not started";
   if (status === "active") return waitingText;
@@ -17,9 +28,30 @@ export default function ChallengePanel({
   rightChallengeStatus,
   rightChallengeMessage,
   onStartHeadRight,
+  verificationState,
+  onStartVerification,
 }) {
+  const verificationActive = [
+    "checking-face", "blink", "turn-left", "turn-right",
+  ].includes(verificationState);
+
   return (
     <>
+      <section className="detection-panel">
+        <h2>Liveness Verification</h2>
+        <p>{VERIFICATION_LABELS[verificationState]}</p>
+        <p><strong>Status:</strong> {verificationState}</p>
+        <button
+          onClick={onStartVerification}
+          disabled={!cameraActive || verificationActive}
+        >
+          {verificationState === "ready"
+            ? "Start Verification"
+            : verificationActive
+              ? "Running..."
+              : "Retry Verification"}
+        </button>
+      </section>
       <section className="detection-panel">
         <h2>Head-Turn Challenges</h2>
 

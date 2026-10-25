@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { getBlinkScores, computeNoseOffset, computeGuidance } from "../utils/livenessUtils";
+import { useVerification } from "./useVerification";
 
 const MODEL_PATH = "/models/face_landmarker.task";
 const WASM_PATH =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
 
 export function useFaceDetection() {
+  const {
+    verificationState,
+    verificationStateRef,
+    startVerification,
+    resetVerification,
+    advanceVerification,
+    startBlinkCb,
+    startLeftCb,
+    startRightCb,
+  } = useVerification();
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -19,6 +30,7 @@ export function useFaceDetection() {
   const blinkCountRef = useRef(0);
 
   const baselineOffsetRef = useRef(null);
+  const faceCountRef = useRef(0);
 
   const challengeActiveRef = useRef(false);
   const challengeTimerRef = useRef(null);
@@ -105,6 +117,8 @@ export function useFaceDetection() {
     rightChallengeTimerRef.current = null;
     setRightChallengeStatus("idle");
     setRightChallengeMessage("Start a right head-turn challenge when ready.");
+
+    resetVerification();
   }
 
 
@@ -202,6 +216,7 @@ export function useFaceDetection() {
         clearTimeout(challengeTimerRef.current);
         setChallengeStatus("completed");
         setChallengeMessage("Blink detected! Challenge completed.");
+        advanceVerification("blink-ok");
       }
     }
   }
@@ -228,6 +243,11 @@ export function useFaceDetection() {
       }
     }, 10000);
   }
+
+  // Wire callbacks so useVerification can trigger challenges without stale closures
+  startBlinkCb.current = () => startBlinkChallenge(faceCountRef.current);
+  startLeftCb.current  = () => startHeadTurnChallenge(faceCountRef.current);
+  startRightCb.current = () => startRightTurnChallenge(faceCountRef.current);
 
   function startHeadTurnChallenge(faceCount) {
     if (!cameraActive || faceCount !== 1) {
@@ -295,13 +315,16 @@ export function useFaceDetection() {
         detectBlink(result.faceBlendshapes);
 
         const faces = result.faceLandmarks || [];
+        faceCountRef.current = faces.length;
         setFaceCount(faces.length);
 
         if (faces.length === 0) {
+          advanceVerification("face-lost");
           setGuidance("No face detected. Look at the camera.");
         } else if (faces.length > 1) {
           setGuidance("Multiple faces detected. Only one person should be visible.");
         } else {
+          advanceVerification("face-stable");
           const landmarks = faces[0];
           const noseOffset = computeNoseOffset(landmarks);
 
@@ -321,6 +344,7 @@ export function useFaceDetection() {
             clearTimeout(headChallengeTimerRef.current);
             setHeadChallengeStatus("completed");
             setHeadChallengeMessage("Left turn detected!");
+            advanceVerification("left-ok");
           }
 
           if (
@@ -333,6 +357,7 @@ export function useFaceDetection() {
             clearTimeout(rightChallengeTimerRef.current);
             setRightChallengeStatus("completed");
             setRightChallengeMessage("Right turn detected!");
+            advanceVerification("right-ok");
           }
 
           setGuidance(computeGuidance(landmarks, relativeOffset));
@@ -375,5 +400,7 @@ export function useFaceDetection() {
     startBlinkChallenge,
     startHeadTurnChallenge,
     startRightTurnChallenge,
+    verificationState,
+    startVerification,
   };
 }

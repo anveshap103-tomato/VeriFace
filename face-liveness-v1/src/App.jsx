@@ -24,6 +24,8 @@ function App() {
     startBlinkChallenge,
     startHeadTurnChallenge,
     startRightTurnChallenge,
+    verificationState,
+    startVerification,
   } = useFaceDetection();
 
   return (
@@ -51,6 +53,8 @@ function App() {
         rightChallengeStatus={rightChallengeStatus}
         rightChallengeMessage={rightChallengeMessage}
         onStartHeadRight={() => startRightTurnChallenge(faceCount)}
+        verificationState={verificationState}
+        onStartVerification={() => startVerification(cameraActive, faceCount)}
       />
 
       <p className="status">
